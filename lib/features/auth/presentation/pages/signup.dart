@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'verify_sms_page.dart';
 
 class SignupPage extends StatefulWidget {
@@ -12,6 +13,7 @@ class _SignupPageState extends State<SignupPage> {
   final _formKey = GlobalKey<FormState>();
   final _userCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
+  bool _sending = false;
 
   @override
   void dispose() {
@@ -22,17 +24,75 @@ class _SignupPageState extends State<SignupPage> {
 
   bool get _valid => _formKey.currentState?.validate() ?? false;
 
+  // Normaliza a E.164 para Bolivia por defecto
+  String _formatBoliviaE164(String raw) {
+    final digits = raw.replaceAll(RegExp(r'\D'), '');
+    if (digits.startsWith('591')) return '+$digits'; // 591XXXXXXXX
+    if (digits.length == 8) return '+591$digits'; // 8 dígitos
+    if (digits.startsWith('0') && digits.length == 9) {
+      // 0XXXXXXXX
+      return '+591${digits.substring(1)}';
+    }
+    return '+$digits'; // fallback si ya viene con prefijo
+  }
+
+  Future<void> _startPhoneVerification() async {
+    if (!_valid || _sending) return;
+    FocusScope.of(context).unfocus();
+    setState(() => _sending = true);
+
+    final phoneE164 = _formatBoliviaE164(_phoneCtrl.text.trim());
+    final auth = FirebaseAuth.instance;
+
+    try {
+      await auth.verifyPhoneNumber(
+        phoneNumber: phoneE164,
+        timeout: const Duration(seconds: 60),
+        verificationCompleted: (credential) async {
+          // Opcional: login automático cuando Play Services autovalida
+          // await auth.signInWithCredential(credential);
+          // if (mounted) Navigator.pushReplacementNamed(context, '/home');
+        },
+        verificationFailed: (e) {
+          final msg = switch (e.code) {
+            'invalid-phone-number' => 'Número inválido',
+            'too-many-requests' => 'Demasiados intentos. Intenta más tarde.',
+            'quota-exceeded' => 'Cuota de SMS agotada temporalmente.',
+            _ => 'Error: ${e.message}',
+          };
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(msg)));
+        },
+        codeSent: (verificationId, resendToken) {
+          if (!mounted) return;
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder:
+                  (_) => VerifySmsPage(
+                    phoneLabel: phoneE164,
+                    verificationId:
+                        verificationId, // necesario para validar el PIN
+                    forceResendToken: resendToken, // opcional (para reenviar)
+                  ),
+            ),
+          );
+        },
+        codeAutoRetrievalTimeout: (verificationId) {},
+      );
+    } catch (_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se pudo iniciar la verificación')),
+      );
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
+  }
+
+  // Mantiene tu firma original, ahora invoca la verificación
   void _goToVerify(String role) {
     if (!_valid) return;
-
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder:
-            (_) => VerifySmsPage(
-              phoneLabel: _phoneCtrl.text.isEmpty ? null : _phoneCtrl.text,
-            ),
-      ),
-    );
+    _startPhoneVerification();
   }
 
   @override
@@ -51,7 +111,6 @@ class _SignupPageState extends State<SignupPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Atrás
                 Align(
                   alignment: Alignment.centerLeft,
                   child: IconButton.filledTonal(
@@ -164,12 +223,11 @@ class _SignupPageState extends State<SignupPage> {
                 ),
                 const SizedBox(height: 22),
 
-                // Botón: Usuario
                 SizedBox(
                   width: double.infinity,
                   height: 56,
                   child: ElevatedButton(
-                    onPressed: () => _goToVerify('usuario'),
+                    onPressed: _sending ? null : () => _goToVerify('usuario'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: verdeAzulado,
                       foregroundColor: Colors.black,
@@ -178,17 +236,22 @@ class _SignupPageState extends State<SignupPage> {
                       ),
                       textStyle: const TextStyle(fontWeight: FontWeight.w600),
                     ),
-                    child: const Text('Registrate como usuario'),
+                    child:
+                        _sending
+                            ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                            : const Text('Registrate como usuario'),
                   ),
                 ),
                 const SizedBox(height: 14),
-
-                // Botón: Conductor
                 SizedBox(
                   width: double.infinity,
                   height: 56,
                   child: ElevatedButton(
-                    onPressed: () => _goToVerify('conductor'),
+                    onPressed: _sending ? null : () => _goToVerify('conductor'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: verdeAzulado,
                       foregroundColor: Colors.black,
@@ -197,7 +260,14 @@ class _SignupPageState extends State<SignupPage> {
                       ),
                       textStyle: const TextStyle(fontWeight: FontWeight.w600),
                     ),
-                    child: const Text('Registrate como conductor'),
+                    child:
+                        _sending
+                            ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                            : const Text('Registrate como conductor'),
                   ),
                 ),
 
@@ -210,7 +280,7 @@ class _SignupPageState extends State<SignupPage> {
                       const Text(
                         'Ya formas parte de Sueltito? ',
                         style: TextStyle(
-                          color: verdeAzulado,
+                          color: Color(0xFF199D89),
                           fontWeight: FontWeight.w600,
                         ),
                       ),

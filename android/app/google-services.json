@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "403250644361",
+    "project_id": "sueltitoapp",
+    "storage_bucket": "sueltitoapp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:403250644361:android:a2f835976aad5330fdcd58",
+        "android_client_info": {
+          "package_name": "com.example.sueltito"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC9XLu-eyt8fmbKunJgR8CWB0jERa7Pr6s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
