@@ -84,7 +84,7 @@ class _LoginPageState extends State<LoginPage> {
                         textInputAction: TextInputAction.done,
                         onFieldSubmitted: (_) => _submit(),
                         decoration: InputDecoration(
-                          hintText: 'Ingresa tu usuario',
+                          hintText: 'Ingresa tu numero telefonico',
                           hintStyle: const TextStyle(color: Colors.black26),
                           filled: true,
                           fillColor: const Color(0xFFF3F5F6),
@@ -107,10 +107,11 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ),
                         ),
+
                         validator:
                             (v) =>
                                 (v == null || v.trim().isEmpty)
-                                    ? 'Ingresa tu usuario'
+                                    ? 'Ingresa tu numero telefonico'
                                     : null,
                       ),
                       const SizedBox(height: 18),
