@@ -26,20 +26,34 @@ class PaymentResult {
     required double amount,
     required DateTime timestamp,
     required String description,
-  }) => PaymentResult(
-        success: true, mode: mode, passengerId: passengerId,
-        amount: amount, timestamp: timestamp, description: description,
-      );
+  }) {
+    return PaymentResult(
+      success: true,
+      mode: mode,
+      passengerId: passengerId,
+      amount: amount,
+      timestamp: timestamp,
+      description: description,
+      failure: null,
+    );
+  }
 
   factory PaymentResult.failure({
     required ScanMode mode,
     required String passengerId,
     required DateTime timestamp,
     required FailureCode failure,
-  }) => PaymentResult(
-        success: false, mode: mode, passengerId: passengerId,
-        amount: 0.0, timestamp: timestamp, description: '—', failure: failure,
-      );
+  }) {
+    return PaymentResult(
+      success: false,
+      mode: mode,
+      passengerId: passengerId,
+      amount: 0.0,
+      timestamp: timestamp,
+      description: '—',
+      failure: failure,
+    );
+  }
 }
 
 class Trip {
@@ -47,5 +61,10 @@ class Trip {
   final String passengerId;
   final double amount;
   final DateTime timestamp;
-  const Trip({required this.description, required this.passengerId, required this.amount, required this.timestamp});
+  const Trip({
+    required this.description,
+    required this.passengerId,
+    required this.amount,
+    required this.timestamp,
+  });
 }

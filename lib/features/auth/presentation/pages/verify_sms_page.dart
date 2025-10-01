@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:pinput/pinput.dart';
+import 'package:go_router/go_router.dart';
 
 class VerifySmsPage extends StatefulWidget {
   const VerifySmsPage({
@@ -20,7 +21,7 @@ class VerifySmsPage extends StatefulWidget {
 
 class _VerifySmsPageState extends State<VerifySmsPage> {
   static const violetaRuso = Color(0xFF280033);
-  static const verdeNeon = Color(0xFF33FF00);
+  static const _verdeBlack = Color(0xFF199d89);
   static const gris = Color(0xFFD9D9D9);
 
   final _pinController = TextEditingController();
@@ -36,15 +37,19 @@ class _VerifySmsPageState extends State<VerifySmsPage> {
         smsCode: code,
       );
       await FirebaseAuth.instance.signInWithCredential(credential);
+
       if (!mounted) return;
-      Navigator.pushReplacementNamed(context, '/home');
+      // Navega directo a la pantalla del CONDUCTOR
+      context.go('/driver');
     } on FirebaseAuthException catch (e) {
       final msg = switch (e.code) {
         'invalid-verification-code' => 'Código incorrecto',
         'session-expired' => 'El código expiró, solicita uno nuevo',
         _ => 'Error: ${e.message}',
       };
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+      }
     } finally {
       if (mounted) setState(() => _sending = false);
     }
@@ -58,7 +63,7 @@ class _VerifySmsPageState extends State<VerifySmsPage> {
       textStyle: const TextStyle(
         fontSize: 20,
         fontWeight: FontWeight.w700,
-        color: verdeNeon,
+        color: _verdeBlack,
       ),
       decoration: BoxDecoration(
         color: const Color(0xFFF3F5F6),
@@ -85,7 +90,7 @@ class _VerifySmsPageState extends State<VerifySmsPage> {
                 style: TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.w800,
-                  color: verdeNeon,
+                  color: _verdeBlack,
                 ),
               ),
               const SizedBox(height: 12),
@@ -106,7 +111,7 @@ class _VerifySmsPageState extends State<VerifySmsPage> {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: verdeNeon, width: 2),
+                      border: Border.all(color: _verdeBlack, width: 2),
                     ),
                   ),
                   submittedPinTheme: defaultPinTheme,
@@ -121,20 +126,19 @@ class _VerifySmsPageState extends State<VerifySmsPage> {
                 child: ElevatedButton(
                   onPressed: _sending ? null : _verify,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: verdeNeon,
+                    backgroundColor: _verdeBlack,
                     foregroundColor: Colors.black,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child:
-                      _sending
-                          ? const SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                          : const Text('Verificar'),
+                  child: _sending
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Verificar'),
                 ),
               ),
             ],
